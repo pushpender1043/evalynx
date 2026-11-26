@@ -1,0 +1,261 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@import "./styles/theme.css";
+
+@layer base {
+  html {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .dark body {
+    letter-spacing: 0.008em;
+  }
+
+  code,
+  pre,
+  .font-mono-tabular {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .clay-card {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-clay);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 180ms ease,
+      border-color 180ms ease;
+  }
+
+  .dark .clay-card {
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .clay-card-tinted {
+    background-color: var(--bg-surface-tinted);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-subtle);
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 180ms ease;
+  }
+
+  .clay-card-dashed {
+    background-color: var(--bg-dashed);
+    border-radius: var(--radius-card);
+    border: 1.5px dashed var(--border-dashed);
+    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .clay-card-dashed:hover {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-surface-tinted);
+  }
+
+  .clay-card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-clay-hover);
+  }
+
+  .clay-surface-sm {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius-control);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-clay-sm);
+    transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .clay-surface-sm:hover:not(:disabled) {
+    background-color: var(--bg-surface-hover);
+  }
+
+  .clay-surface-sm:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-clay-pressed);
+  }
+
+  .clay-inset {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-clay-inset);
+    transition: box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
+  }
+
+  .clay-inset:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-clay-inset), var(--shadow-clay-focus);
+  }
+
+  .clay-btn-primary {
+    background: linear-gradient(180deg, var(--accent-primary-end) 0%, var(--accent-primary) 100%);
+    color: #ffffff;
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-clay-primary);
+    transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 160ms ease;
+  }
+
+  .clay-btn-primary:hover:not(:disabled) {
+    opacity: 0.94;
+    transform: translateY(-1px);
+  }
+
+  .clay-btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-clay-primary-pressed);
+  }
+
+  .clay-btn-navy {
+    background-color: var(--navy-cta);
+    color: var(--navy-cta-text);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-clay-navy);
+    transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 160ms ease;
+  }
+
+  .clay-btn-navy:hover:not(:disabled) {
+    background-color: var(--navy-cta-hover);
+    transform: translateY(-1px);
+  }
+
+  .clay-btn-navy:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .clay-btn-secondary {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-clay-sm);
+    transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 160ms ease;
+  }
+
+  .clay-btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-surface-hover);
+  }
+
+  .clay-btn-secondary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-clay-pressed);
+  }
+
+  .evx-fade-up {
+    animation: evx-fade-up 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Custom subtle scrollbars inside the shell panel */
+  .evx-panel-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(108, 92, 231, 0.22) transparent;
+  }
+
+  .evx-panel-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .evx-panel-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .evx-panel-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(108, 92, 231, 0.22);
+    border-radius: 999px;
+  }
+}
+
+@keyframes evx-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes evx-bounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.1, 0.9);
+  }
+  50% {
+    transform: translateY(calc(var(--evx-jump, 18px) * -1)) scale(0.95, 1.05);
+  }
+}
+
+@keyframes evx-shadow {
+  0%,
+  100% {
+    transform: scaleX(1.08);
+    opacity: 0.34;
+  }
+  50% {
+    transform: scaleX(0.58);
+    opacity: 0.14;
+  }
+}
+
+.evx-ball {
+  animation: evx-bounce 0.9s ease-in-out infinite;
+  will-change: transform;
+}
+
+.evx-ball-shadow {
+  animation: evx-shadow 0.9s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clay-card-interactive:hover,
+  .clay-btn-primary:hover,
+  .clay-btn-primary:active,
+  .clay-btn-navy:hover,
+  .clay-btn-navy:active,
+  .clay-btn-secondary:active,
+  .clay-surface-sm:active {
+    transform: none;
+  }
+
+  .evx-fade-up {
+    animation: none;
+  }
+
+  .evx-ball,
+  .evx-ball-shadow {
+    animation: none;
+  }
+}

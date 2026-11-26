@@ -1,0 +1,6 @@
+{
+  "name": "ProctoIQ",
+  "description": "Smart online test, assessment, and integrity proctoring platform for professors and students.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,217 @@
+:root {
+  /* Layer 1 & Layer 2 Shell Surfaces */
+  --bg-canvas: #d9daee;
+  --bg-panel: #fafafe;
+
+  /* Layer 3 Card Surfaces (70% white/off-white, 20% soft lavender) */
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-tinted: #f1f0fc;
+  --bg-surface-muted: #f1f0fc;
+  --bg-surface-hover: #f6f5fe;
+  --bg-dashed: #f6f5fe;
+  --border-dashed: #cfcbef;
+  --border-subtle: #e7e5f6;
+  --border-input: #e2dff5;
+  --tile-lavender: #eeedfb;
+
+  /* Typography */
+  --text-primary: #14123a;
+  --text-secondary: #535174;
+  --text-muted: #9a98b8;
+
+  /* Brand & Semantic Accents (7% purple, 3% pops) */
+  --accent-primary: #6c5ce7;
+  --accent-primary-end: #7a6cf0;
+  --accent-primary-hover: #5c4cd9;
+  --accent-secondary: #a89cf5;
+  --accent-soft: #eeedfb;
+  --accent-soft-text: #5a4ad4;
+
+  /* Navy Primary CTA */
+  --navy-cta: #14123a;
+  --navy-cta-hover: #211e56;
+  --navy-cta-text: #ffffff;
+
+  /* Mint (success, progress ring, live dot, tiny badges) */
+  --semantic-mint: #5cc9a7;
+  --semantic-mint-soft: #e4f7f0;
+  --semantic-mint-text: #1c7b5d;
+
+  /* Soft Pink/Coral (ONLY High/danger badges & errors) */
+  --semantic-coral: #d9607a;
+  --semantic-coral-soft: #fde7ea;
+  --semantic-coral-text: #c24560;
+
+  /* Amber (ONLY tiny warning dots/badges) */
+  --semantic-amber: #f2b84b;
+  --semantic-amber-soft: #fdf5e4;
+  --semantic-amber-text: #94630d;
+
+  /* Soft Airy Shadows — Light */
+  --shadow-panel: 0 30px 80px rgba(108, 92, 231, 0.12);
+
+  --shadow-clay:
+    0 8px 30px rgba(108, 92, 231, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  --shadow-clay-sm:
+    0 4px 16px rgba(108, 92, 231, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  --shadow-clay-hover:
+    0 14px 34px rgba(108, 92, 231, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  --shadow-clay-inset:
+    inset 0 2px 6px rgba(108, 92, 231, 0.06);
+
+  --shadow-clay-primary:
+    0 8px 20px rgba(108, 92, 231, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+
+  --shadow-clay-primary-pressed:
+    0 3px 10px rgba(108, 92, 231, 0.22),
+    inset 0 2px 4px rgba(45, 34, 130, 0.22);
+
+  --shadow-clay-navy:
+    0 8px 20px rgba(20, 18, 58, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+  --shadow-clay-pressed:
+    0 2px 6px rgba(108, 92, 231, 0.08),
+    inset 0 2px 4px rgba(108, 92, 231, 0.08);
+
+  --shadow-clay-sidebar:
+    0 12px 30px rgba(108, 92, 231, 0.24);
+
+  --shadow-clay-focus: 0 0 0 3px rgba(108, 92, 231, 0.24);
+
+  /* Custom Inline SVG Illustration Tokens — Light */
+  --ill-stroke: #14123a;
+  --ill-card: #ffffff;
+  --ill-fill-1: #e5e2fc;
+  --ill-fill-2: #f1f0fc;
+  --ill-purple: #6c5ce7;
+  --ill-purple-soft: #a89cf5;
+  --ill-mint: #5cc9a7;
+  --ill-pink: #f4a4b6;
+
+  /* Loader dots — Light */
+  --loader-ball-1: #6c5ce7;
+  --loader-ball-2: #a89cf5;
+  --loader-ball-3: #5cc9a7;
+  --loader-shadow: rgba(20, 18, 58, 0.16);
+
+  /* Radii */
+  --radius-panel: 40px;
+  --radius-card: 28px;
+  --radius-control: 16px;
+  --radius-chip: 999px;
+}
+
+.dark {
+  /* Layer 1 & Layer 2 Shell Surfaces — Dark */
+  --bg-canvas: #0e0c2b;
+  --bg-panel: #1a1744;
+
+  /* Layer 3 Card Surfaces — Dark */
+  --bg-surface: #221f54;
+  --bg-surface-elevated: #282460;
+  --bg-surface-tinted: #27235d;
+  --bg-surface-muted: #1e1a4c;
+  --bg-surface-hover: #2c2868;
+  --bg-dashed: #201c50;
+  --border-dashed: #453f88;
+  --border-subtle: #312c6f;
+  --border-input: #363177;
+  --tile-lavender: #2f2a6c;
+
+  /* Typography — Dark (WCAG AA+) */
+  --text-primary: #edebff;
+  --text-secondary: #b4b1df;
+  --text-muted: #8a87b8;
+
+  /* Brand & Semantic Accents — Dark */
+  --accent-primary: #6c5ce7;
+  --accent-primary-end: #7e70f2;
+  --accent-primary-hover: #7c6cf0;
+  --accent-secondary: #a89cf5;
+  --accent-soft: #2e296b;
+  --accent-soft-text: #d1cbff;
+
+  /* Navy Primary CTA — Dark (high-contrast crisp light-on-dark) */
+  --navy-cta: #edebff;
+  --navy-cta-hover: #ffffff;
+  --navy-cta-text: #14123a;
+
+  /* Mint — Dark */
+  --semantic-mint: #5cc9a7;
+  --semantic-mint-soft: #163a39;
+  --semantic-mint-text: #86e6c8;
+
+  /* Soft Pink/Coral — Dark */
+  --semantic-coral: #e57990;
+  --semantic-coral-soft: #3f1f36;
+  --semantic-coral-text: #ff9fb3;
+
+  /* Amber — Dark */
+  --semantic-amber: #f2b84b;
+  --semantic-amber-soft: #3c2f1e;
+  --semantic-amber-text: #ffd07c;
+
+  /* Soft Airy Shadows — Dark */
+  --shadow-panel: 0 30px 80px rgba(0, 0, 0, 0.48);
+
+  --shadow-clay:
+    0 8px 30px rgba(5, 4, 20, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  --shadow-clay-sm:
+    0 4px 16px rgba(5, 4, 20, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --shadow-clay-hover:
+    0 14px 36px rgba(5, 4, 20, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+
+  --shadow-clay-inset:
+    inset 0 2px 6px rgba(0, 0, 0, 0.26);
+
+  --shadow-clay-primary:
+    0 8px 20px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  --shadow-clay-primary-pressed:
+    0 3px 10px rgba(0, 0, 0, 0.36),
+    inset 0 2px 4px rgba(20, 14, 70, 0.38);
+
+  --shadow-clay-navy:
+    0 8px 20px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  --shadow-clay-pressed:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.28);
+
+  --shadow-clay-sidebar:
+    0 12px 30px rgba(0, 0, 0, 0.44);
+
+  --shadow-clay-focus: 0 0 0 3px rgba(168, 156, 245, 0.36);
+
+  /* Custom Inline SVG Illustration Tokens — Dark */
+  --ill-stroke: #d4d0ff;
+  --ill-card: #221f54;
+  --ill-fill-1: #363175;
+  --ill-fill-2: #2b2762;
+  --ill-purple: #8577f5;
+  --ill-purple-soft: #b2a8fa;
+  --ill-mint: #6ad6b4;
+  --ill-pink: #ef91a7;
+
+  /* Loader dots — Dark (lighter purple tones for crisp contrast) */
+  --loader-ball-1: #9486f7;
+  --loader-ball-2: #c9c0ff;
+  --loader-ball-3: #6fd9b8;
+  --loader-shadow: rgba(0, 0, 0, 0.42);
+}

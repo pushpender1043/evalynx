@@ -1,0 +1,13 @@
+export type { IllustrationProps } from './types';
+export { CreateTestIllustration } from './CreateTestIllustration';
+export { AIGeneratorIllustration } from './AIGeneratorIllustration';
+export { QuestionBankIllustration } from './QuestionBankIllustration';
+export { ResultsIllustration } from './ResultsIllustration';
+export { EmptyTestsIllustration } from './EmptyTestsIllustration';
+export { EmptyPerformanceIllustration } from './EmptyPerformanceIllustration';
+export { EmptySubmissionsIllustration } from './EmptySubmissionsIllustration';
+export { EmptyNotificationsIllustration } from './EmptyNotificationsIllustration';
+export { JoinWithCodeIllustration } from './JoinWithCodeIllustration';
+export { PracticeModeIllustration } from './PracticeModeIllustration';
+export { EmptyStudentsIllustration } from './EmptyStudentsIllustration';
+export { PromoIllustration } from './PromoIllustration';
