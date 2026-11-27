@@ -8,10 +8,14 @@ import type {
   TestStatus,
 } from '../types';
 
-const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+import { validateTestForPublish } from './testValidation';
+
+export { validateTestForPublish };
+
+const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 /**
- * Generate a 6-character uppercase alphanumeric join code avoiding ambiguous characters (0/O, 1/I).
+ * Generate a 6-character uppercase alphanumeric join code avoiding ambiguous characters (0/O, 1/I/L).
  */
 export function generateSixCharJoinCode(rng: () => number = Math.random): string {
   let out = '';
@@ -253,84 +257,6 @@ export function shuffleArray<T>(items: readonly T[], rng: () => number = Math.ra
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
-}
-
-/**
- * Validate a test and its questions before publishing.
- */
-export function validateTestForPublish(params: {
-  title: string;
-  subject: string;
-  durationMinutes: number;
-  startTime: string;
-  endTime: string;
-  attemptLimit: number;
-  passingMarks: number;
-  questions: BuilderQuestion[];
-}): string[] {
-  const errors: string[] = [];
-
-  if (!params.title.trim() || params.title.trim().length < 3) {
-    errors.push('Test title must be at least 3 characters.');
-  }
-  if (!params.subject.trim()) {
-    errors.push('Subject is required.');
-  }
-  if (!Number.isFinite(params.durationMinutes) || params.durationMinutes < 1 || params.durationMinutes > 360) {
-    errors.push('Duration must be between 1 and 360 minutes.');
-  }
-  if (!Number.isFinite(params.attemptLimit) || params.attemptLimit < 1 || params.attemptLimit > 20) {
-    errors.push('Attempt limit must be between 1 and 20.');
-  }
-
-  const startMs = new Date(params.startTime).getTime();
-  const endMs = new Date(params.endTime).getTime();
-  if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
-    errors.push('Valid start and end schedule dates are required.');
-  } else if (endMs <= startMs) {
-    errors.push('End schedule time must be after start time.');
-  }
-
-  if (params.questions.length === 0) {
-    errors.push('Add at least 1 question before publishing.');
-  }
-
-  const totalMarks = params.questions.reduce((acc, q) => acc + (Number(q.marks) || 0), 0);
-  if (params.passingMarks < 0 || (totalMarks > 0 && params.passingMarks > totalMarks)) {
-    errors.push(`Passing marks must be between 0 and total marks (${totalMarks}).`);
-  }
-
-  params.questions.forEach((q, idx) => {
-    const num = idx + 1;
-    if (!q.prompt.trim()) {
-      errors.push(`Question ${num}: Question text is required.`);
-    }
-    if (!Number.isFinite(q.marks) || q.marks <= 0) {
-      errors.push(`Question ${num}: Marks must be greater than 0.`);
-    }
-    if (q.type === 'mcq' || q.type === 'multi_select') {
-      const filledOptions = q.options.filter((o) => o.text.trim().length > 0);
-      if (filledOptions.length < 2) {
-        errors.push(`Question ${num}: Provide at least 2 answer options.`);
-      }
-      const validIds = new Set(filledOptions.map((o) => o.id));
-      const validCorrect = q.correctAnswers.filter((id) => validIds.has(id));
-      if (validCorrect.length === 0) {
-        errors.push(`Question ${num}: Select at least one correct answer.`);
-      }
-      if (q.type === 'mcq' && validCorrect.length > 1) {
-        errors.push(`Question ${num}: Single-choice MCQ can only have one correct answer.`);
-      }
-    } else if (q.type === 'true_false') {
-      const validIds = new Set(q.options.map((o) => o.id));
-      const validCorrect = q.correctAnswers.filter((id) => validIds.has(id));
-      if (validCorrect.length !== 1) {
-        errors.push(`Question ${num}: Select True or False as the correct answer.`);
-      }
-    }
-  });
-
-  return errors;
 }
 
 /**

@@ -19,11 +19,11 @@ Role and profile metadata for every authenticated account.
 Assessment definition authored by a professor.
 - `title`, `subject`, `description`, `instructions`: `string`
 - `category`: `'DSA' | 'Aptitude' | 'Core CS' | 'Mathematics' | 'Coding'`
-- `code`: `string` (auto-generated 6-character uppercase alphanumeric join code, e.g. `"9ZRRTF"`)
+- `code`: `string` (auto-generated unique 6-character uppercase join code from `A-Z, 2-9`, excluding `0/O/1/I/L`)
 - `professorId`, `professorName`: `string`
 - `published`: `boolean`
 - `status`: `'draft' | 'scheduled' | 'live' | 'completed'` (computed dynamically from `published`, `startTime`, `endTime`)
-- `scheduledAt`, `startTime`, `endTime`: ISO-8601 `string`
+- `scheduledAt`: ISO-8601 `string`; `startTime`, `endTime`: ISO-8601 `string | null` (optional/nullable for open-ended tests)
 - `durationMinutes`, `totalMarks`, `passingMarks`, `questionCount`: `number`
 - `enrolledCount`, `submittedCount`, `averageScore?`: `number`
 - `joinedStudentIds`: `string[]`

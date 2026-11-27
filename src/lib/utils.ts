@@ -33,15 +33,6 @@ export function formatDateTime(isoDate: string): string {
   });
 }
 
-export function generateTestCode(subject: string): string {
-  const prefix = subject
-    .replace(/[^a-zA-Z]/g, '')
-    .toUpperCase()
-    .slice(0, 3)
-    .padEnd(3, 'X');
-  const suffix = Math.floor(100 + Math.random() * 900);
-  return `${prefix}-${suffix}`;
-}
 
 export function downloadTextFile(filename: string, content: string, mimeType: string): void {
   const blob = new Blob([content], { type: mimeType });

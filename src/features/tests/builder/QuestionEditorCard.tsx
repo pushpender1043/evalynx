@@ -5,6 +5,8 @@ import {
   BookmarkCheck,
   BookmarkPlus,
   Check,
+  ChevronDown,
+  ChevronUp,
   Copy,
   GripVertical,
   ImagePlus,
@@ -68,10 +70,18 @@ export function QuestionEditorCard({
   onSaveToBank,
   onUploadImage,
 }: QuestionEditorCardProps) {
+  const [collapsed, setCollapsed] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const typeLabel =
+    QUESTION_TYPES.find((t) => t.value === question.type)?.label ?? 'Question';
+  const hasMissingAnswer =
+    (question.type === 'mcq' || question.type === 'multi_select' || question.type === 'true_false') &&
+    question.correctAnswers.length === 0;
+  const isIncomplete = !question.prompt.trim() || question.marks <= 0 || hasMissingAnswer;
 
   const handleTypeChange = (nextType: BuilderQuestion['type']) => {
     if (nextType === question.type) return;
@@ -197,22 +207,46 @@ export function QuestionEditorCard({
     >
       {/* Header Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <span
-            className="clay-surface-sm flex h-9 w-9 cursor-grab items-center justify-center text-[var(--text-muted)] active:cursor-grabbing"
+            className="clay-surface-sm flex h-9 w-9 shrink-0 cursor-grab items-center justify-center text-[var(--text-muted)] active:cursor-grabbing"
             title="Drag to reorder"
             aria-hidden="true"
           >
             <GripVertical className="h-4 w-4" />
           </span>
-          <div>
-            <span className="text-sm font-extrabold text-[var(--text-primary)] tabular-nums">
-              Question {index + 1}
+          <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? `Expand question ${index + 1}` : `Collapse question ${index + 1}`}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-[var(--bg-surface-tinted)] text-[var(--text-secondary)]">
+              {collapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
             </span>
-            <span className="ml-2 text-xs font-semibold text-[var(--text-muted)] tabular-nums">
-              {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
-            </span>
-          </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-extrabold text-[var(--text-primary)] tabular-nums">
+                  Question {index + 1}
+                </span>
+                <ClayBadge tone="purple">{typeLabel}</ClayBadge>
+                <span className="text-xs font-semibold text-[var(--text-muted)] tabular-nums">
+                  {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+                </span>
+                {isIncomplete && <ClayBadge tone="coral">Needs attention</ClayBadge>}
+              </div>
+              {collapsed && (
+                <p className="mt-0.5 truncate text-xs text-[var(--text-secondary)]">
+                  {question.prompt.trim() || 'Untitled question — click to expand'}
+                </p>
+              )}
+            </div>
+          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -273,6 +307,9 @@ export function QuestionEditorCard({
           </ClayButton>
         </div>
       </div>
+
+      {!collapsed && (
+        <>
 
       {/* Question Type Selector */}
       <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Question type">
@@ -525,13 +562,13 @@ export function QuestionEditorCard({
           />
         </div>
 
-        {(question.type === 'long_answer' || question.type === 'short_answer') && (
+        {question.type === 'long_answer' && (
           <div className="space-y-1.5">
             <label
               htmlFor={`q-rubric-${question.id}`}
               className="block text-xs font-semibold text-[var(--text-primary)]"
             >
-              Grading rubric
+              Grading rubric (long answer)
             </label>
             <textarea
               id={`q-rubric-${question.id}`}
@@ -544,6 +581,8 @@ export function QuestionEditorCard({
           </div>
         )}
       </div>
+        </>
+      )}
     </article>
   );
 }

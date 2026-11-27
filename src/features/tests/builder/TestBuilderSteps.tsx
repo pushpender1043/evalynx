@@ -14,6 +14,7 @@ import type {
   TestCategory,
   TestSettings,
 } from '../../../types';
+import type { PublishValidationIssue } from '../../../lib/testValidation';
 import { ClayBadge, ClayButton, ClayCard, ClayInput, Toggle } from '../../../components/ui';
 import { cn, formatDateTime } from '../../../lib/utils';
 
@@ -28,10 +29,10 @@ export function toDateTimeLocalValue(iso: string): string {
   )}:${pad(date.getMinutes())}`;
 }
 
-export function fromDateTimeLocalValue(val: string, fallbackIso: string): string {
-  if (!val) return fallbackIso;
+export function fromDateTimeLocalValue(val: string): string {
+  if (!val.trim()) return '';
   const parsed = new Date(val);
-  return Number.isNaN(parsed.getTime()) ? fallbackIso : parsed.toISOString();
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
 }
 
 /* ========================= STEP 1: BASIC INFO ========================= */
@@ -199,23 +200,46 @@ export function SettingsStep({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ClayInput
-            label="Start schedule"
-            type="datetime-local"
-            value={toDateTimeLocalValue(settings.startTime)}
-            onChange={(e) =>
-              update({ startTime: fromDateTimeLocalValue(e.target.value, settings.startTime) })
-            }
-          />
-          <ClayInput
-            label="End schedule"
-            type="datetime-local"
-            value={toDateTimeLocalValue(settings.endTime)}
-            onChange={(e) =>
-              update({ endTime: fromDateTimeLocalValue(e.target.value, settings.endTime) })
-            }
-          />
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <ClayInput
+                label="Start schedule (optional)"
+                type="datetime-local"
+                value={toDateTimeLocalValue(settings.startTime)}
+                onChange={(e) => update({ startTime: fromDateTimeLocalValue(e.target.value) })}
+              />
+              {settings.startTime && (
+                <button
+                  type="button"
+                  onClick={() => update({ startTime: '' })}
+                  className="cursor-pointer text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--accent-primary)]"
+                >
+                  Clear start time (starts immediately)
+                </button>
+              )}
+            </div>
+            <div className="space-y-1">
+              <ClayInput
+                label="End schedule (optional)"
+                type="datetime-local"
+                value={toDateTimeLocalValue(settings.endTime)}
+                onChange={(e) => update({ endTime: fromDateTimeLocalValue(e.target.value) })}
+              />
+              {settings.endTime && (
+                <button
+                  type="button"
+                  onClick={() => update({ endTime: '' })}
+                  className="cursor-pointer text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--accent-primary)]"
+                >
+                  Clear end time (keep open-ended)
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Schedule is optional. Leave end time empty to keep the test open indefinitely once live.
+          </p>
         </div>
       </ClayCard>
 
@@ -371,9 +395,15 @@ interface ReviewPublishStepProps {
   settings: TestSettings;
   proctoring: ProctoringPolicy;
   questions: BuilderQuestion[];
-  validationErrors: string[];
+  validationIssues: PublishValidationIssue[];
   onJumpToStep: (step: number) => void;
 }
+
+const STEP_LABELS: Record<0 | 1 | 2, string> = {
+  0: 'Basic Info',
+  1: 'Questions',
+  2: 'Settings',
+};
 
 export function ReviewPublishStep({
   title,
@@ -384,7 +414,7 @@ export function ReviewPublishStep({
   settings,
   proctoring,
   questions,
-  validationErrors,
+  validationIssues,
   onJumpToStep,
 }: ReviewPublishStepProps) {
   const [copiedField, setCopiedField] = useState<'code' | 'link' | null>(null);
@@ -409,31 +439,32 @@ export function ReviewPublishStep({
   return (
     <div className="space-y-5">
       {/* Validation Banner */}
-      {validationErrors.length > 0 ? (
+      {validationIssues.length > 0 ? (
         <ClayCard className="bg-[var(--semantic-coral-soft)]">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--semantic-coral-text)]" />
-            <div className="space-y-2">
+            <div className="min-w-0 flex-1 space-y-2.5">
               <h3 className="text-sm font-bold text-[var(--semantic-coral-text)]">
-                Fix {validationErrors.length} {validationErrors.length === 1 ? 'item' : 'items'}{' '}
+                Fix {validationIssues.length} {validationIssues.length === 1 ? 'item' : 'items'}{' '}
                 before publishing
               </h3>
-              <ul className="list-disc space-y-1 pl-4 text-xs text-[var(--semantic-coral-text)]">
-                {validationErrors.map((err, i) => (
-                  <li key={i}>{err}</li>
+              <ul className="space-y-1.5 text-xs text-[var(--semantic-coral-text)]">
+                {validationIssues.map((issue, i) => (
+                  <li
+                    key={`${issue.field}-${i}`}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-[var(--bg-surface)]/55 px-3 py-1.5"
+                  >
+                    <span>{issue.message}</span>
+                    <button
+                      type="button"
+                      onClick={() => onJumpToStep(issue.step)}
+                      className="cursor-pointer font-bold underline underline-offset-2 hover:opacity-80"
+                    >
+                      Fix in {STEP_LABELS[issue.step]}
+                    </button>
+                  </li>
                 ))}
               </ul>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <ClayButton variant="secondary" size="sm" onClick={() => onJumpToStep(0)}>
-                  Edit Basic Info
-                </ClayButton>
-                <ClayButton variant="secondary" size="sm" onClick={() => onJumpToStep(1)}>
-                  Edit Questions
-                </ClayButton>
-                <ClayButton variant="secondary" size="sm" onClick={() => onJumpToStep(2)}>
-                  Edit Settings
-                </ClayButton>
-              </div>
             </div>
           </div>
         </ClayCard>
@@ -462,7 +493,7 @@ export function ReviewPublishStep({
               Share this 6-character code or direct link once published.
             </p>
           </div>
-          <ClayBadge tone={published ? 'mint' : 'amber'}>
+          <ClayBadge tone={published ? 'mint' : 'neutral'}>
             {published ? 'Published' : 'Draft'}
           </ClayBadge>
         </div>
@@ -567,7 +598,9 @@ export function ReviewPublishStep({
             {title || 'Untitled Assessment'} — {subject || 'No subject'}
           </p>
           <p>
-            Window: {formatDateTime(settings.startTime)} to {formatDateTime(settings.endTime)}
+            Window:{' '}
+            {settings.startTime ? formatDateTime(settings.startTime) : 'Starts immediately'} →{' '}
+            {settings.endTime ? formatDateTime(settings.endTime) : 'Open-ended'}
           </p>
           <p>
             Monitoring:{' '}
@@ -584,6 +617,9 @@ export function ReviewPublishStep({
             <strong className="text-[var(--text-primary)]">
               {settings.showRankToStudents ? 'Visible to students' : 'Hidden'}
             </strong>
+          </p>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Note: Published tests stay editable only before the first student attempt exists.
           </p>
           <div className="flex items-center gap-1.5 pt-1 text-[var(--semantic-mint-text)]">
             <ShieldCheck className="h-4 w-4 shrink-0" />

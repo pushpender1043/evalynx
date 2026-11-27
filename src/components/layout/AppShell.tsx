@@ -9,7 +9,6 @@ import { Topbar } from './Topbar';
 import { BottomNav } from './BottomNav';
 import { NotificationDrawer } from './NotificationDrawer';
 import { ToastContainer } from '../ui';
-import { CreateTestModal } from '../../features/professor/CreateTestModal';
 
 interface AppShellProps {
   children: ReactNode;
@@ -55,7 +54,6 @@ export function AppShell({ children }: AppShellProps) {
 
       <BottomNav />
       <NotificationDrawer />
-      <CreateTestModal />
       <DemoWriteGuardModal />
       <ToastContainer />
     </>

@@ -16,7 +16,7 @@ interface TestListCardProps {
 const statusMeta: Record<TestStatus, { label: string; tone: ClayBadgeTone }> = {
   live: { label: 'Live', tone: 'mint' },
   scheduled: { label: 'Scheduled', tone: 'purple' },
-  draft: { label: 'Draft', tone: 'amber' },
+  draft: { label: 'Draft', tone: 'neutral' },
   completed: { label: 'Completed', tone: 'neutral' },
 };
 

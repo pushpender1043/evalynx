@@ -27,10 +27,10 @@
 - [x] 12 custom theme-aware inline SVG illustrations (`src/components/illustrations/`) + dev-only `/dev/illustrations` showcase
 - [x] Bento Professor & Student Dashboards (`IllustratedActionCard`, `FeatureCard`, `StatChip`, `DashedAddCard`, dual `ProgressRing` cards) without altering business logic, auth, or data services
 
-## Phase 2 — Test Builder, Test Attempt & Result Engine (Day 2)
-- [x] 4-step Professor Test Builder (`/professor/tests/new`, `/professor/tests/:id/edit`) with MCQ, Multiple-Correct, True/False, Short Answer, Long Answer (Coding marked `"Later"`), image upload, drag-and-drop reorder, CSV bulk import/template, 10s draft auto-save, pre-publish validation, and 6-char join code + shareable link
+## Phase 2 — Test Builder, Test Attempt & Result Engine (Day 2 / 2A)
+- [x] 4-step Professor Test Builder (`/professor/tests/new`, `/professor/tests/:id/edit`) with collapsible question cards, delete confirmation, live summary strip, optional nullable schedule, 10s + step-change auto-save, unsaved-changes guard, pure `src/lib/testValidation.ts` + unit tests, unique 6-char join code, and Publish Success screen with copyable `/join/:code` link
 - [x] Reusable `questionBank` Firestore save action per question
-- [x] Professor Tests management (`/professor/tests`) with dynamic schedule status tabs (`Draft`, `Scheduled`, `Live`, `Completed`), search, filter, duplicate, delete, and submissions entry
+- [x] Professor Tests management (`/professor/tests`) with dynamic schedule status tabs (`Draft`, `Scheduled`, `Live`, `Completed`), updated-date sort, search, filter, duplicate, delete, and submissions entry
 - [x] Student Join (`/join/:code`) with redirect preservation, schedule & attempt-limit enforcement, resume detection, and `"I understand"` confirmation
 - [x] Distraction-free Student Timed Attempt Runner (`/student/attempt/:attemptId`) with question palette, Mark for Review, Clear Answer, server-time anchored countdown (5 min amber / 1 min coral warnings), debounced Firestore auto-save, mid-test reload resume, auto-submit on timeout, and submit confirmation modal
 - [x] Isolated answer keys (`tests/{id}/private/answerKey`), pure objective auto-grading with negative marking (`src/lib/grading.ts` + `grading.test.ts`), `showResultMode` visibility control, Student Result review (`/student/results/:attemptId`), Professor Submissions table, and Manual Grading view (`/professor/tests/:id/submissions/:attemptId`)

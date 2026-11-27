@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { isDemoReadOnlyError, triggerDemoWriteGuard } from '../features/demo/demoStore';
 import { testService } from '../services/testService';
-import type { AppNotification, CreateTestDraftInput, TestItem, UserProfile } from '../types';
+import type { AppNotification, TestItem, UserProfile } from '../types';
 
 export interface ToastMessage {
   id: string;
@@ -15,15 +15,12 @@ interface UIState {
   setSearchQuery: (q: string) => void;
   notificationsOpen: boolean;
   setNotificationsOpen: (open: boolean) => void;
-  createTestModalOpen: boolean;
-  setCreateTestModalOpen: (open: boolean) => void;
   tests: TestItem[];
   testsLoaded: boolean;
   workspaceError: string | null;
   notifications: AppNotification[];
   toasts: ToastMessage[];
   loadWorkspaceData: (user: UserProfile) => Promise<void>;
-  createDraftTest: (input: CreateTestDraftInput, professor: UserProfile) => Promise<TestItem>;
   markAllNotificationsRead: (uid: string) => Promise<void>;
   clearWorkspace: () => void;
   pushToast: (toast: Omit<ToastMessage, 'id'>) => void;
@@ -35,8 +32,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   notificationsOpen: false,
   setNotificationsOpen: (notificationsOpen) => set({ notificationsOpen }),
-  createTestModalOpen: false,
-  setCreateTestModalOpen: (createTestModalOpen) => set({ createTestModalOpen }),
   tests: [],
   testsLoaded: false,
   workspaceError: null,
@@ -58,17 +53,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
 
-  createDraftTest: async (input, professor) => {
-    const created = await testService.createDraftTest(input, professor);
-    set((state) => ({ tests: [created, ...state.tests] }));
-    get().pushToast({
-      title: 'Test draft created',
-      description: `${created.title} (${created.code}) saved to Firestore.`,
-      tone: 'success',
-    });
-    return created;
-  },
-
   markAllNotificationsRead: async (uid) => {
     if (triggerDemoWriteGuard('update notifications')) return;
     try {
@@ -88,7 +72,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     set({
       searchQuery: '',
       notificationsOpen: false,
-      createTestModalOpen: false,
       tests: [],
       testsLoaded: false,
       workspaceError: null,

@@ -5,7 +5,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CheckCircle2,
+  Copy,
   Download,
+  Link as LinkIcon,
   Plus,
   Save,
   Send,
@@ -21,8 +24,8 @@ import {
   generateQuestionsCsvTemplate,
   generateSixCharJoinCode,
   parseQuestionsCsv,
-  validateTestForPublish,
 } from '../../../lib/grading';
+import { validateTestPublishIssues } from '../../../lib/testValidation';
 import { mapFirebaseError } from '../../../lib/firebaseErrors';
 import { cn, downloadTextFile } from '../../../lib/utils';
 import { testService } from '../../../services/testService';
@@ -30,7 +33,18 @@ import { questionBankService } from '../../../services/questionBankService';
 import { isDemoModeActive, isDemoReadOnlyError, triggerDemoWriteGuard } from '../../demo';
 import { useAuthStore } from '../../../store/authStore';
 import { useUIStore } from '../../../store/uiStore';
-import { ClayBadge, ClayButton, ClayCard, Loader } from '../../../components/ui';
+import {
+  ClayBadge,
+  ClayButton,
+  ClayCard,
+  EmptyState,
+  Loader,
+  Modal,
+} from '../../../components/ui';
+import {
+  CreateTestIllustration,
+  EmptyTestsIllustration,
+} from '../../../components/illustrations';
 import { QuestionEditorCard } from './QuestionEditorCard';
 import { BasicInfoStep, ReviewPublishStep, SettingsStep } from './TestBuilderSteps';
 
@@ -125,6 +139,14 @@ export function TestBuilderView() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [deleteQuestionIndex, setDeleteQuestionIndex] = useState<number | null>(null);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [publishedSuccess, setPublishedSuccess] = useState<{
+    testId: string;
+    title: string;
+    code: string;
+  } | null>(null);
+  const [copiedSuccessField, setCopiedSuccessField] = useState<'code' | 'link' | null>(null);
 
   const csvInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -174,9 +196,9 @@ export function TestBuilderView() {
     [questions]
   );
 
-  const validationErrors = useMemo(
+  const validationIssues = useMemo(
     () =>
-      validateTestForPublish({
+      validateTestPublishIssues({
         title,
         subject,
         durationMinutes: settings.durationMinutes,
@@ -189,21 +211,21 @@ export function TestBuilderView() {
     [title, subject, settings, questions]
   );
 
-  const performSave = async (publishFlag: boolean, isAutoSave = false) => {
-    if (!user) return;
+  const performSave = async (publishFlag: boolean, isAutoSave = false): Promise<boolean> => {
+    if (!user) return false;
     if (isDemoModeActive()) {
       if (!isAutoSave) {
         triggerDemoWriteGuard(publishFlag ? 'publish a test' : 'save test changes');
       }
-      return;
+      return false;
     }
-    if (isAutoSave && (!title.trim() || saving || publishing)) return;
+    if (isAutoSave && (!title.trim() || saving || publishing)) return false;
 
     if (publishFlag) {
-      if (validationErrors.length > 0) {
+      if (validationIssues.length > 0) {
         setStep(3);
         setActionError('Please resolve all validation issues before publishing.');
-        return;
+        return false;
       }
       setPublishing(true);
     } else {
@@ -249,15 +271,21 @@ export function TestBuilderView() {
           tone: 'success',
         });
         if (publishFlag) {
-          navigate('/professor/tests');
+          setPublishedSuccess({
+            testId: saved.test.id,
+            title: saved.test.title,
+            code: saved.test.code,
+          });
         }
       }
+      return true;
     } catch (err) {
-      if (isDemoReadOnlyError(err)) return;
+      if (isDemoReadOnlyError(err)) return false;
       const friendly = mapFirebaseError(err, 'Could not save test to Firestore.');
       if (!isAutoSave) {
         setActionError(friendly);
       }
+      return false;
     } finally {
       setSaving(false);
       setPublishing(false);
@@ -273,6 +301,53 @@ export function TestBuilderView() {
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty, title, subject, category, description, instructions, settings, proctoring, questions, published, testId]);
+
+  // Warn browser before reload/tab-close if unsaved changes exist
+  useEffect(() => {
+    if (!dirty || isDemoModeActive()) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
+
+  const handleStepChange = (nextStep: number) => {
+    const clamped = Math.max(0, Math.min(3, nextStep));
+    if (clamped === step) return;
+    if (dirty && title.trim() && !isDemoModeActive() && !saving && !publishing) {
+      void performSave(published, true);
+    }
+    setStep(clamped);
+  };
+
+  const handleBackNavigation = () => {
+    if (dirty && !isDemoModeActive()) {
+      setLeaveConfirmOpen(true);
+      return;
+    }
+    navigate('/professor/tests');
+  };
+
+  const handleCopySuccessValue = async (text: string, field: 'code' | 'link') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSuccessField(field);
+      pushToast({
+        title: field === 'code' ? 'Join code copied' : 'Shareable link copied',
+        description: text,
+        tone: 'success',
+      });
+      window.setTimeout(() => setCopiedSuccessField(null), 2000);
+    } catch {
+      pushToast({
+        title: 'Copy failed',
+        description: 'Copy the code manually from this screen.',
+        tone: 'warning',
+      });
+    }
+  };
 
   const markDirty = () => setDirty(true);
 
@@ -373,15 +448,102 @@ export function TestBuilderView() {
     );
   }
 
+  if (publishedSuccess) {
+    const shareUrl = `${window.location.origin}/join/${publishedSuccess.code}`;
+    return (
+      <div className="mx-auto max-w-2xl py-6">
+        <ClayCard className="space-y-6 p-7 sm:p-9 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <CreateTestIllustration size={132} />
+            <ClayBadge tone="mint">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Test Published
+            </ClayBadge>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)]">
+              {publishedSuccess.title}
+            </h1>
+            <p className="max-w-md text-xs text-[var(--text-secondary)]">
+              Your assessment is saved in Firestore and ready to share with students using the
+              unique join code or link below.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+            <div className="clay-inset flex items-center justify-between gap-3 rounded-[20px] px-4 py-3.5">
+              <div>
+                <p className="text-[11px] font-semibold text-[var(--text-muted)]">Join Code</p>
+                <p className="mt-0.5 font-mono-tabular text-2xl font-extrabold tracking-widest text-[var(--accent-primary)]">
+                  {publishedSuccess.code}
+                </p>
+              </div>
+              <ClayButton
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleCopySuccessValue(publishedSuccess.code, 'code')}
+                leftIcon={
+                  copiedSuccessField === 'code' ? (
+                    <Check className="h-3.5 w-3.5 text-[var(--semantic-mint-text)]" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )
+                }
+              >
+                {copiedSuccessField === 'code' ? 'Copied' : 'Copy'}
+              </ClayButton>
+            </div>
+
+            <div className="clay-inset flex items-center justify-between gap-3 rounded-[20px] px-4 py-3.5">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-[var(--text-muted)]">
+                  Shareable Link
+                </p>
+                <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text-primary)]">
+                  {shareUrl}
+                </p>
+              </div>
+              <ClayButton
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleCopySuccessValue(shareUrl, 'link')}
+                leftIcon={
+                  copiedSuccessField === 'link' ? (
+                    <Check className="h-3.5 w-3.5 text-[var(--semantic-mint-text)]" />
+                  ) : (
+                    <LinkIcon className="h-3.5 w-3.5" />
+                  )
+                }
+              >
+                {copiedSuccessField === 'link' ? 'Copied' : 'Copy'}
+              </ClayButton>
+            </div>
+          </div>
+
+          <p className="text-xs text-[var(--text-muted)]">
+            Note: Published tests stay editable only before the first student attempt exists.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+            <ClayButton variant="secondary" onClick={() => setPublishedSuccess(null)}>
+              Continue Editing
+            </ClayButton>
+            <ClayButton variant="navy" onClick={() => navigate('/professor/tests')}>
+              Go to Tests
+            </ClayButton>
+          </div>
+        </ClayCard>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Builder Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <ClayButton
             variant="icon"
             size="sm"
-            onClick={() => navigate('/professor/tests')}
+            onClick={handleBackNavigation}
             aria-label="Back to tests"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -391,18 +553,27 @@ export function TestBuilderView() {
               <h1 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)] sm:text-2xl">
                 {testId ? 'Edit Test' : 'Create Test'}
               </h1>
-              <ClayBadge tone={published ? 'mint' : 'amber'}>
+              <ClayBadge tone={published ? 'mint' : 'neutral'}>
                 {published ? 'Published' : 'Draft'}
               </ClayBadge>
-              {lastSavedAt && (
+              {saving ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)]">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent-primary)]" />
+                  Saving...
+                </span>
+              ) : lastSavedAt ? (
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--text-muted)]">
                   <Check className="h-3.5 w-3.5 text-[var(--semantic-mint-text)]" />
                   Saved {lastSavedAt}
                 </span>
-              )}
+              ) : dirty && !isDemoModeActive() ? (
+                <span className="text-xs font-medium text-[var(--text-muted)]">
+                  Unsaved changes
+                </span>
+              ) : null}
             </div>
             <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
-              Auto-saves drafts every 10 seconds · Code{' '}
+              Auto-saves drafts every 10s and on step change · Code{' '}
               <strong className="font-mono-tabular text-[var(--accent-primary)]">{code}</strong>
             </p>
           </div>
@@ -419,7 +590,7 @@ export function TestBuilderView() {
             Save Draft
           </ClayButton>
           <ClayButton
-            variant="primary"
+            variant="navy"
             size="sm"
             loading={publishing}
             onClick={() => void performSave(true)}
@@ -439,7 +610,7 @@ export function TestBuilderView() {
               <button
                 key={s.id}
                 type="button"
-                onClick={() => setStep(s.id)}
+                onClick={() => handleStepChange(s.id)}
                 className={cn(
                   'cursor-pointer rounded-[18px] px-3 py-2.5 text-xs font-bold transition-all',
                   active
@@ -454,6 +625,44 @@ export function TestBuilderView() {
           })}
         </div>
       </nav>
+
+      {/* Persistent Live Summary Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-[var(--bg-surface-tinted)] px-4 py-2.5 text-xs">
+        <div className="flex flex-wrap items-center gap-4 tabular-nums">
+          <span className="text-[var(--text-secondary)]">
+            Questions:{' '}
+            <strong className="font-bold text-[var(--text-primary)]">{questions.length}</strong>
+          </span>
+          <span className="text-[var(--text-secondary)]">
+            Total marks:{' '}
+            <strong className="font-bold text-[var(--text-primary)]">{totalMarks}</strong>
+          </span>
+          <span className="text-[var(--text-secondary)]">
+            Duration:{' '}
+            <strong className="font-bold text-[var(--text-primary)]">
+              {settings.durationMinutes} min
+            </strong>
+          </span>
+          <span className="text-[var(--text-secondary)]">
+            Pass:{' '}
+            <strong className="font-bold text-[var(--text-primary)]">
+              {settings.passingMarks}
+            </strong>
+          </span>
+        </div>
+
+        <span className="font-semibold text-[var(--text-muted)]">
+          {saving
+            ? 'Saving...'
+            : isDemoModeActive()
+              ? 'Demo preview (read-only)'
+              : dirty
+                ? 'Unsaved changes'
+                : lastSavedAt
+                  ? `Saved at ${lastSavedAt}`
+                  : 'Ready'}
+        </span>
+      </div>
 
       {actionError && (
         <div
@@ -534,22 +743,13 @@ export function TestBuilderView() {
           </ClayCard>
 
           {questions.length === 0 ? (
-            <ClayCard className="py-12 text-center">
-              <p className="text-base font-bold text-[var(--text-primary)]">No questions yet</p>
-              <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--text-secondary)]">
-                Add MCQ, Multiple-Correct, True/False, Short Answer, or Long Answer questions, or
-                import a batch from CSV.
-              </p>
-              <div className="mt-5 flex justify-center gap-3">
-                <ClayButton
-                  variant="primary"
-                  onClick={handleAddQuestion}
-                  leftIcon={<Plus className="h-4 w-4" />}
-                >
-                  Add First Question
-                </ClayButton>
-              </div>
-            </ClayCard>
+            <EmptyState
+              illustration={<EmptyTestsIllustration size={128} />}
+              title="No questions yet"
+              description="Add MCQ, Multiple-Correct, True/False, Short Answer, or Long Answer questions, or import a batch from CSV."
+              actionLabel="Add First Question"
+              onAction={handleAddQuestion}
+            />
           ) : (
             <div className="space-y-4">
               {questions.map((q, idx) => (
@@ -569,7 +769,7 @@ export function TestBuilderView() {
                   onDragEnd={() => setDragIndex(null)}
                   onChange={(updated) => handleUpdateQuestion(idx, updated)}
                   onDuplicate={() => handleDuplicateQuestion(idx)}
-                  onDelete={() => handleDeleteQuestion(idx)}
+                  onDelete={() => setDeleteQuestionIndex(idx)}
                   onMoveUp={() => handleReorder(idx, idx - 1)}
                   onMoveDown={() => handleReorder(idx, idx + 1)}
                   onSaveToBank={async () => {
@@ -656,8 +856,8 @@ export function TestBuilderView() {
           settings={settings}
           proctoring={proctoring}
           questions={questions}
-          validationErrors={validationErrors}
-          onJumpToStep={setStep}
+          validationIssues={validationIssues}
+          onJumpToStep={handleStepChange}
         />
       )}
 
@@ -666,7 +866,7 @@ export function TestBuilderView() {
         <ClayButton
           variant="secondary"
           disabled={step === 0}
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          onClick={() => handleStepChange(step - 1)}
           leftIcon={<ArrowLeft className="h-4 w-4" />}
         >
           Previous
@@ -675,16 +875,16 @@ export function TestBuilderView() {
         {step < 3 ? (
           <ClayButton
             variant="primary"
-            onClick={() => setStep((s) => Math.min(3, s + 1))}
+            onClick={() => handleStepChange(step + 1)}
             rightIcon={<ArrowRight className="h-4 w-4" />}
           >
             Next step
           </ClayButton>
         ) : (
           <ClayButton
-            variant="primary"
+            variant="navy"
             loading={publishing}
-            disabled={validationErrors.length > 0}
+            disabled={validationIssues.length > 0}
             onClick={() => void performSave(true)}
             leftIcon={<Send className="h-4 w-4" />}
           >
@@ -692,6 +892,75 @@ export function TestBuilderView() {
           </ClayButton>
         )}
       </div>
+
+      {/* Delete Question Confirmation Modal */}
+      <Modal
+        open={deleteQuestionIndex !== null}
+        onClose={() => setDeleteQuestionIndex(null)}
+        title={
+          deleteQuestionIndex !== null
+            ? `Delete Question ${deleteQuestionIndex + 1}?`
+            : 'Delete question?'
+        }
+        description="This removes the question and its answer key from this assessment."
+      >
+        <div className="flex justify-end gap-2.5 pt-2">
+          <ClayButton variant="secondary" size="sm" onClick={() => setDeleteQuestionIndex(null)}>
+            Cancel
+          </ClayButton>
+          <ClayButton
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              if (deleteQuestionIndex !== null) {
+                handleDeleteQuestion(deleteQuestionIndex);
+              }
+              setDeleteQuestionIndex(null);
+            }}
+          >
+            Delete question
+          </ClayButton>
+        </div>
+      </Modal>
+
+      {/* Unsaved Changes Leave Confirmation Modal */}
+      <Modal
+        open={leaveConfirmOpen}
+        onClose={() => setLeaveConfirmOpen(false)}
+        title="Leave with unsaved changes?"
+        description="You have unsaved edits in this test. Save your draft before leaving or discard them."
+      >
+        <div className="flex flex-wrap justify-end gap-2.5 pt-2">
+          <ClayButton variant="secondary" size="sm" onClick={() => setLeaveConfirmOpen(false)}>
+            Keep editing
+          </ClayButton>
+          <ClayButton
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              setDirty(false);
+              setLeaveConfirmOpen(false);
+              navigate('/professor/tests');
+            }}
+          >
+            Discard & leave
+          </ClayButton>
+          <ClayButton
+            variant="primary"
+            size="sm"
+            loading={saving}
+            onClick={async () => {
+              const ok = await performSave(false);
+              if (ok) {
+                setLeaveConfirmOpen(false);
+                navigate('/professor/tests');
+              }
+            }}
+          >
+            Save draft & leave
+          </ClayButton>
+        </div>
+      </Modal>
     </div>
   );
 }

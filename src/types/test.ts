@@ -68,15 +68,6 @@ export interface TestItem {
   updatedAt?: string;
 }
 
-export interface CreateTestDraftInput {
-  title: string;
-  subject: string;
-  category: TestCategory;
-  durationMinutes: number;
-  totalMarks: number;
-  scheduledAt: string;
-}
-
 export interface AttemptAnswer {
   selectedOptionIds?: string[];
   textAnswer?: string;

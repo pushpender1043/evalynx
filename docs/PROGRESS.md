@@ -1,5 +1,10 @@
 # Evalynx — Progress Log
 
+## Day 2A — Professor Test Builder & Tests List Polish (Completed)
+- Added `src/lib/testValidation.ts` + unit tests (`testValidation.test.ts`), unique 6-char join-code collision check (`A-Z, 2-9`, no `0/O/1/I/L`), and optional/nullable `startTime`/`endTime` schedules in `testService.ts`.
+- Upgraded `TestBuilderView`, `QuestionEditorCard`, and `TestBuilderSteps` with collapsible question cards, delete-question confirmation modal, persistent live summary strip, step-change auto-save with `Saving...`/`Saved` status, `beforeunload` + unsaved-changes leave modal, `EmptyTestsIllustration`, and a dedicated Publish Success screen with code/link Copy buttons.
+- Updated `ProfessorTestsView` & `TestListCard` to sort by `updatedAt` descending and use neutral grey for Draft badges; deleted dead `CreateTestModal.tsx` and unused `createDraftTest`/`generateTestCode` code.
+
 ## Day 1.9 — Deep UI Redesign: 3-Layer Shell, S-Curve Sidebar, Soft Color System & Illustrations (Completed)
 
 ### What Was Built

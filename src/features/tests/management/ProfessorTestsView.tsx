@@ -93,17 +93,23 @@ export function ProfessorTestsView() {
 
   const filteredTests = useMemo(() => {
     const q = (localSearch || globalSearch).trim().toLowerCase();
-    return enrichedTests.filter((t) => {
-      if (activeTab !== 'all' && t.status !== activeTab) return false;
-      if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
-      if (!q) return true;
-      return (
-        t.title.toLowerCase().includes(q) ||
-        t.subject.toLowerCase().includes(q) ||
-        t.code.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q)
-      );
-    });
+    return enrichedTests
+      .filter((t) => {
+        if (activeTab !== 'all' && t.status !== activeTab) return false;
+        if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
+        if (!q) return true;
+        return (
+          t.title.toLowerCase().includes(q) ||
+          t.subject.toLowerCase().includes(q) ||
+          t.code.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || a.scheduledAt || 0).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || b.scheduledAt || 0).getTime();
+        return bTime - aTime;
+      });
   }, [enrichedTests, activeTab, categoryFilter, localSearch, globalSearch]);
 
   const handleCopy = async (key: string, text: string, label: string) => {
@@ -326,9 +332,7 @@ export function ProfessorTestsView() {
                           ? 'mint'
                           : item.status === 'scheduled'
                             ? 'purple'
-                            : item.status === 'draft'
-                              ? 'amber'
-                              : 'neutral'
+                            : 'neutral'
                       }
                       className="capitalize"
                     >
@@ -361,7 +365,8 @@ export function ProfessorTestsView() {
                   </div>
 
                   <p className="mt-2.5 text-[11px] text-[var(--text-muted)]">
-                    {formatDateTime(item.startTime)} → {formatDateTime(item.endTime)}
+                    {item.startTime ? formatDateTime(item.startTime) : 'Starts on publish'} →{' '}
+                    {item.endTime ? formatDateTime(item.endTime) : 'Open-ended'}
                   </p>
                 </div>
 

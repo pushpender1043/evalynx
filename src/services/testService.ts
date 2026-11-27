@@ -25,7 +25,6 @@ import { normalizeTestCode } from '../lib/validators';
 import type {
   AppNotification,
   BuilderQuestion,
-  CreateTestDraftInput,
   PerformancePoint,
   ProctoringPolicy,
   PublicQuestion,
@@ -73,15 +72,16 @@ export function mapTestDoc(id: string, data: Record<string, unknown>): TestItem 
       ? settingsRaw.startTime
       : typeof data.startTime === 'string'
         ? data.startTime
-        : toIsoString(data.scheduledAt);
+        : typeof data.scheduledAt === 'string'
+          ? data.scheduledAt
+          : '';
 
-  const defaultEndIso = new Date(new Date(startTime).getTime() + 7 * 86400 * 1000).toISOString();
   const endTime =
     typeof settingsRaw.endTime === 'string'
       ? settingsRaw.endTime
       : typeof data.endTime === 'string'
         ? data.endTime
-        : defaultEndIso;
+        : '';
 
   const published =
     typeof data.published === 'boolean'
@@ -143,7 +143,7 @@ export function mapTestDoc(id: string, data: Record<string, unknown>): TestItem 
     professorName: typeof data.professorName === 'string' ? data.professorName : '',
     published,
     status,
-    scheduledAt: startTime,
+    scheduledAt: startTime || (data.createdAt ? toIsoString(data.createdAt) : ''),
     startTime,
     endTime,
     durationMinutes,
@@ -360,6 +360,21 @@ export const testService = {
       code = generateSixCharJoinCode();
     }
 
+    // Ensure unique 6-character join code across Firestore tests
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        const collisionSnap = await getDocs(
+          query(collection(db, 'tests'), where('code', '==', code), limit(2))
+        );
+        const hasOtherOwner = collisionSnap.docs.some((d) => d.id !== testId);
+        if (!hasOtherOwner) break;
+        code = generateSixCharJoinCode();
+      } catch {
+        // If rules restrict broad code queries for drafts, keep generated 6-char code
+        break;
+      }
+    }
+
     const normalizedQuestions: BuilderQuestion[] = payload.questions.map((q, index) => ({
       ...q,
       order: index,
@@ -371,11 +386,14 @@ export const testService = {
       rubric: q.rubric?.trim() || '',
     }));
 
+    const startTimeValue = payload.settings.startTime?.trim() || null;
+    const endTimeValue = payload.settings.endTime?.trim() || null;
+
     const totalMarks = normalizedQuestions.reduce((acc, q) => acc + q.marks, 0);
     const computedStatus = computeEffectiveTestStatus({
       published: payload.publish,
-      startTime: payload.settings.startTime,
-      endTime: payload.settings.endTime,
+      startTime: startTimeValue ?? undefined,
+      endTime: endTimeValue ?? undefined,
     });
 
     try {
@@ -395,9 +413,9 @@ export const testService = {
         professorName: payload.professor.name,
         published: payload.publish,
         status: computedStatus,
-        scheduledAt: payload.settings.startTime,
-        startTime: payload.settings.startTime,
-        endTime: payload.settings.endTime,
+        scheduledAt: startTimeValue ?? new Date().toISOString(),
+        startTime: startTimeValue,
+        endTime: endTimeValue,
         durationMinutes: payload.settings.durationMinutes,
         totalMarks,
         passingMarks: payload.settings.passingMarks,
@@ -412,7 +430,11 @@ export const testService = {
         joinedStudentIds: Array.isArray(existingData?.joinedStudentIds)
           ? existingData.joinedStudentIds
           : [],
-        settings: payload.settings,
+        settings: {
+          ...payload.settings,
+          startTime: startTimeValue ?? '',
+          endTime: endTimeValue ?? '',
+        },
         proctoring: payload.proctoring ??
           existingData?.proctoring ?? {
             enabled: false,
@@ -482,33 +504,6 @@ export const testService = {
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `tests/${testId}`);
     }
-  },
-
-  async createDraftTest(input: CreateTestDraftInput, professor: UserProfile): Promise<TestItem> {
-    const startTime = input.scheduledAt || new Date().toISOString();
-    const endTime = new Date(new Date(startTime).getTime() + 7 * 86400 * 1000).toISOString();
-    const result = await this.saveTestBuilder({
-      professor,
-      title: input.title,
-      subject: input.subject,
-      description: '',
-      instructions: 'Read each question carefully before submitting.',
-      category: input.category,
-      settings: {
-        durationMinutes: input.durationMinutes,
-        startTime,
-        endTime,
-        shuffleQuestions: false,
-        shuffleOptions: false,
-        negativeMarking: false,
-        attemptLimit: 1,
-        showResultMode: 'immediate',
-        passingMarks: Math.round(input.totalMarks * 0.4),
-      },
-      questions: [],
-      publish: false,
-    });
-    return result.test;
   },
 
   async duplicateTest(testId: string, professor: UserProfile): Promise<TestItem> {
